@@ -18,19 +18,19 @@
 import os
 from dotenv import load_dotenv
 
-# ── Load .env file ───────────────────────────────────────────────────────────
-# load_dotenv() searches for a .env file in the current directory (and parents)
-# and loads all KEY=VALUE pairs into the environment.
-#
-# Example .env file:
-#   OPENROUTER_API_KEY=sk-or-v1-your-key-here
-#
-# After load_dotenv(), you can access it with os.getenv("OPENROUTER_API_KEY")
-# ─────────────────────────────────────────────────────────────────────────────
+# ── Load .env file (for local development) ───────────────────────────────────
 load_dotenv()
 
 # ── API Key ──────────────────────────────────────────────────────────────────
+# Try .env first (local), then st.secrets (Streamlit Cloud)
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+if not OPENROUTER_API_KEY:
+    try:
+        import streamlit as st
+        OPENROUTER_API_KEY = st.secrets.get("OPENROUTER_API_KEY")
+    except Exception:
+        pass
 
 if not OPENROUTER_API_KEY:
     raise ValueError(
@@ -38,11 +38,8 @@ if not OPENROUTER_API_KEY:
         "╔══════════════════════════════════════════════════════════════╗\n"
         "║  ERROR: OPENROUTER_API_KEY not found!                      ║\n"
         "║                                                            ║\n"
-        "║  Steps to fix:                                             ║\n"
-        "║  1. Go to https://openrouter.ai/keys                      ║\n"
-        "║  2. Create a free API key                                  ║\n"
-        "║  3. Create a .env file in the project root                 ║\n"
-        "║  4. Add: OPENROUTER_API_KEY=sk-or-v1-your-key-here        ║\n"
+        "║  For local: Create a .env file with your key               ║\n"
+        "║  For cloud: Add key in Streamlit secrets                   ║\n"
         "╚══════════════════════════════════════════════════════════════╝\n"
     )
 
