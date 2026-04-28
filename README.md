@@ -1,10 +1,3 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/Streamlit-1.30+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" />
-  <img src="https://img.shields.io/badge/Pydantic-V2-E92063?style=for-the-badge&logo=pydantic&logoColor=white" />
-  <img src="https://img.shields.io/badge/LLM-Powered-00D4AA?style=for-the-badge&logo=openai&logoColor=white" />
-</p>
-
 <h1 align="center">🎯 Rubric-Grounded AI Answer Evaluation System</h1>
 
 <p align="center">
@@ -12,7 +5,20 @@
 </p>
 
 <p align="center">
-  An AI-powered answer evaluation system that uses <b>structured rubrics</b> to grade student answers — ensuring consistency, fairness, and transparency that free-form AI grading cannot provide.
+  <a href="https://rubric-ai-evaluator.streamlit.app/">
+    <img src="https://img.shields.io/badge/🚀_Live_Demo-Click_Here-0ea5e9?style=for-the-badge" />
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Streamlit-1.30+-FF4B4B?style=flat-square&logo=streamlit&logoColor=white" />
+  <img src="https://img.shields.io/badge/Pydantic-V2-E92063?style=flat-square&logo=pydantic&logoColor=white" />
+  <img src="https://img.shields.io/badge/LLM-Powered-00D4AA?style=flat-square&logo=openai&logoColor=white" />
+</p>
+
+<p align="center">
+  An AI-powered answer evaluation system that uses <b>structured rubrics</b> to grade student answers —<br/>ensuring consistency, fairness, and transparency that free-form AI grading cannot provide.
 </p>
 
 ---
