@@ -1,0 +1,7 @@
+# Core dependencies for Mini Answer Evaluator
+fastapi
+uvicorn
+streamlit
+requests
+python-dotenv
+pydantic
