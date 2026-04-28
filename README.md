@@ -23,6 +23,14 @@
 
 ---
 
+<h3 align="center">📸 See It In Action</h3>
+
+<p align="center">
+  <img src="assets/demo_result.png" alt="Evaluation Result Demo" width="600" />
+</p>
+
+---
+
 ## 🧠 The Problem
 
 Traditional AI grading (ChatGPT, Gemini, etc.) evaluates answers using **general knowledge** — leading to:
