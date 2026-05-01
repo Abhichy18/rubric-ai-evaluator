@@ -67,8 +67,8 @@ if not OPENROUTER_API_KEY:
 #   python -c "import requests; r=requests.get('https://openrouter.ai/api/v1/models'); [print(m['id']) for m in r.json()['data'] if ':free' in m['id']]"
 #
 # ─────────────────────────────────────────────────────────────────────────────
-PRIMARY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
-FALLBACK_MODEL = "openrouter/auto"
+PRIMARY_MODEL = "google/gemma-3-27b-it:free"
+FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
 
 # ── OpenRouter API Settings ─────────────────────────────────────────────────
 #

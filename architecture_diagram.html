@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RubricAI — Architecture Diagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 800px;
+            height: 800px;
+        }
+
+        /* Title */
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-align: center;
+            z-index: 10;
+            text-shadow: 0 0 30px rgba(14, 165, 233, 0.3);
+        }
+
+        .title span {
+            background: linear-gradient(135deg, #0ea5e9, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            position: absolute;
+            top: 58px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 13px;
+            font-weight: 400;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            z-index: 10;
+        }
+
+        /* SVG Lines */
+        .lines-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .connection-line {
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 1.5;
+            transition: stroke 0.4s, stroke-width 0.4s;
+        }
+
+        .connection-line.active {
+            stroke: rgba(14, 165, 233, 0.6);
+            stroke-width: 2.5;
+            filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.4));
+        }
+
+        /* Animated pulse along lines */
+        .pulse-dot {
+            fill: #0ea5e9;
+            opacity: 0;
+        }
+
+        .pulse-dot.active {
+            opacity: 1;
+        }
+
+        /* Center Hub */
+        .center-hub {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            z-index: 5;
+        }
+
+        .hub-outer {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #0ea5e9, #a855f7, #ec4899, #f97316, #0ea5e9);
+            animation: hub-rotate 8s linear infinite;
+            opacity: 0.7;
+        }
+
+        @keyframes hub-rotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .hub-inner {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 35%, #1a1a2e, #0a0a0a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 6;
+        }
+
+        .hub-icon {
+            font-size: 36px;
+            margin-bottom: 2px;
+        }
+
+        .hub-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .hub-sublabel {
+            font-size: 8px;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Glow ring */
+        .hub-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 70%);
+            animation: glow-pulse 3s ease-in-out infinite;
+            z-index: 3;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+        }
+
+        /* Outer Nodes */
+        .node {
+            position: absolute;
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+        }
+
+        .node:hover {
+            transform: scale(1.25) !important;
+            z-index: 10;
+        }
+
+        .node-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: radial-gradient(circle at 35% 30%, #1e1e2e, #111118);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .node:hover .node-bg {
+            border-color: rgba(14, 165, 233, 0.6);
+            box-shadow: 0 0 25px rgba(14, 165, 233, 0.3), inset 0 0 15px rgba(14, 165, 233, 0.1);
+        }
+
+        .node-icon {
+            position: relative;
+            font-size: 28px;
+            z-index: 2;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .node-label {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.7);
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .node:hover .node-label {
+            opacity: 1;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(15, 15, 25, 0.95);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 12px;
+            padding: 14px 18px;
+            color: #fff;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 100;
+            max-width: 220px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tooltip-title {
+            font-weight: 800;
+            font-size: 13px;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, #0ea5e9, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tooltip-desc {
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(14, 165, 233, 0.4);
+            border-radius: 50%;
+            animation: float-particle linear infinite;
+        }
+
+        @keyframes float-particle {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(-100px) translateX(30px); opacity: 0; }
+        }
+
+        /* Entrance animation */
+        .node {
+            opacity: 0;
+            animation: node-appear 0.6s forwards;
+        }
+
+        @keyframes node-appear {
+            from {
+                opacity: 0;
+                transform: scale(0) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Data flow animation */
+        .flow-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 1px dashed rgba(14, 165, 233, 0.1);
+            z-index: 2;
+            animation: ring-rotate 30s linear infinite;
+        }
+
+        .flow-ring:nth-child(2) {
+            animation-direction: reverse;
+            animation-duration: 40s;
+        }
+
+        @keyframes ring-rotate {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Footer badge */
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: rgba(255,255,255,0.25);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            z-index: 10;
+        }
+
+        .footer a {
+            color: rgba(14, 165, 233, 0.5);
+            text-decoration: none;
+        }
+
+        /* Category color indicators */
+        .node[data-category="core"] .node-bg { border-color: rgba(14, 165, 233, 0.3); }
+        .node[data-category="tech"] .node-bg { border-color: rgba(168, 85, 247, 0.3); }
+        .node[data-category="feature"] .node-bg { border-color: rgba(236, 72, 153, 0.3); }
+        .node[data-category="data"] .node-bg { border-color: rgba(249, 115, 22, 0.3); }
+        .node[data-category="infra"] .node-bg { border-color: rgba(34, 197, 94, 0.3); }
+
+        .node[data-category="core"]:hover .node-bg { border-color: rgba(14, 165, 233, 0.8); box-shadow: 0 0 25px rgba(14, 165, 233, 0.3); }
+        .node[data-category="tech"]:hover .node-bg { border-color: rgba(168, 85, 247, 0.8); box-shadow: 0 0 25px rgba(168, 85, 247, 0.3); }
+        .node[data-category="feature"]:hover .node-bg { border-color: rgba(236, 72, 153, 0.8); box-shadow: 0 0 25px rgba(236, 72, 153, 0.3); }
+        .node[data-category="data"]:hover .node-bg { border-color: rgba(249, 115, 22, 0.8); box-shadow: 0 0 25px rgba(249, 115, 22, 0.3); }
+        .node[data-category="infra"]:hover .node-bg { border-color: rgba(34, 197, 94, 0.8); box-shadow: 0 0 25px rgba(34, 197, 94, 0.3); }
+
+        /* Orbit dots */
+        .orbit-dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(14, 165, 233, 0.6);
+            z-index: 3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="title">🎯 <span>RubricAI</span> Architecture</div>
+        <div class="subtitle">Rubric-Grounded AI Evaluation System</div>
+
+        <!-- SVG for connection lines -->
+        <svg class="lines-svg" id="linesSvg"></svg>
+
+        <!-- Decorative orbit rings -->
+        <div class="flow-ring" style="width: 560px; height: 560px;"></div>
+        <div class="flow-ring" style="width: 440px; height: 440px;"></div>
+
+        <!-- Glow effect -->
+        <div class="hub-glow"></div>
+
+        <!-- Center Hub -->
+        <div class="center-hub">
+            <div class="hub-outer"></div>
+            <div class="hub-inner">
+                <div class="hub-icon">🎯</div>
+                <div class="hub-label">RubricAI</div>
+                <div class="hub-sublabel">Evaluator</div>
+            </div>
+        </div>
+
+        <!-- Tooltip -->
+        <div class="tooltip" id="tooltip">
+            <div class="tooltip-title" id="tooltipTitle"></div>
+            <div class="tooltip-desc" id="tooltipDesc"></div>
+        </div>
+
+        <div class="footer">Built by <a href="https://github.com/Abhichy18">Abhishek Choudhary</a></div>
+    </div>
+
+    <script>
+        const nodes = [
+            // Core Components
+            { icon: "🖥️", label: "Streamlit UI", category: "core", desc: "Interactive frontend with theme-aware design, input forms, and score visualization" },
+            { icon: "📝", label: "app.py", category: "core", desc: "870+ lines — Main application orchestrating evaluation flow and comparison mode" },
+            { icon: "🔍", label: "Retriever", category: "core", desc: "Keyword-based rubric matching with stop-word filtering & set intersection" },
+            { icon: "🤖", label: "Evaluator", category: "core", desc: "LLM evaluation engine with structured prompts, JSON enforcement & arithmetic validation" },
+
+            // Tech Stack
+            { icon: "🐍", label: "Python 3.9+", category: "tech", desc: "Core language — powering all backend logic and data processing" },
+            { icon: "🧠", label: "OpenRouter", category: "tech", desc: "Free-tier LLM API access — supports multiple model fallback" },
+            { icon: "✅", label: "Pydantic V2", category: "tech", desc: "Type-safe data contracts with automatic marks clamping & validation" },
+            { icon: "📡", label: "Requests", category: "tech", desc: "HTTP client for reliable LLM API calls with error handling" },
+
+            // Features
+            { icon: "📊", label: "Rubric Store", category: "feature", desc: "13 CBSE-style rubrics across 6 subjects with anchor examples" },
+            { icon: "⚖️", label: "Comparison", category: "feature", desc: "Side-by-side rubric vs. no-rubric evaluation for transparency" },
+            { icon: "🛡️", label: "Fallback", category: "feature", desc: "Generic rubric activates when no subject match found" },
+            { icon: "🔢", label: "Math Guard", category: "feature", desc: "Catches & fixes LLM arithmetic errors (~15% of responses)" },
+
+            // Data Flow
+            { icon: "📋", label: "JSON Schema", category: "data", desc: "Enforced output format — criterion-by-criterion structured scoring" },
+            { icon: "🧹", label: "Data Cleaning", category: "data", desc: "Regex stripping of <think> blocks, markdown fences & artifacts" },
+            { icon: "📈", label: "Score Display", category: "data", desc: "Visual gauges, progress bars & detailed criterion breakdown" },
+
+            // Infrastructure
+            { icon: "🔐", label: "dotenv", category: "infra", desc: "Secure API key management via environment variables" },
+            { icon: "⚙️", label: "config.py", category: "infra", desc: "Centralized configuration — model selection, params & thresholds" },
+            { icon: "🚀", label: "Streamlit Cloud", category: "infra", desc: "Production deployment at rubric-ai-evaluator.streamlit.app" },
+        ];
+
+        const container = document.getElementById('container');
+        const svg = document.getElementById('linesSvg');
+        const tooltip = document.getElementById('tooltip');
+        const tooltipTitle = document.getElementById('tooltipTitle');
+        const tooltipDesc = document.getElementById('tooltipDesc');
+
+        const centerX = 400;
+        const centerY = 400;
+        const radius = 280;
+
+        // Create particles
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 800 + 'px';
+            particle.style.top = Math.random() * 800 + 'px';
+            particle.style.animationDuration = (3 + Math.random() * 5) + 's';
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            container.appendChild(particle);
+        }
+
+        // Create nodes and lines
+        nodes.forEach((node, i) => {
+            const angle = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+
+            // Create SVG line
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', centerX);
+            line.setAttribute('y1', centerY);
+            line.setAttribute('x2', x);
+            line.setAttribute('y2', y);
+            line.classList.add('connection-line');
+            line.id = `line-${i}`;
+            svg.appendChild(line);
+
+            // Create animated dot on line
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('r', '3');
+            circle.classList.add('pulse-dot');
+            circle.id = `dot-${i}`;
+
+            // Animate along the line
+            const animate = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+            animate.setAttribute('dur', (2 + Math.random() * 2) + 's');
+            animate.setAttribute('repeatCount', 'indefinite');
+            animate.setAttribute('path', `M${centerX},${centerY} L${x},${y}`);
+            circle.appendChild(animate);
+            svg.appendChild(circle);
+
+            // Create node element
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'node';
+            nodeEl.setAttribute('data-category', node.category);
+            nodeEl.style.left = (x - 36) + 'px';
+            nodeEl.style.top = (y - 36) + 'px';
+            nodeEl.style.animationDelay = (i * 0.08) + 's';
+
+            nodeEl.innerHTML = `
+                <div class="node-bg"></div>
+                <span class="node-icon">${node.icon}</span>
+                <span class="node-label">${node.label}</span>
+            `;
+
+            // Hover events
+            nodeEl.addEventListener('mouseenter', (e) => {
+                // Activate line
+                document.getElementById(`line-${i}`).classList.add('active');
+                document.getElementById(`dot-${i}`).classList.add('active');
+
+                // Show tooltip
+                tooltipTitle.textContent = node.label;
+                tooltipDesc.textContent = node.desc;
+
+                const rect = nodeEl.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                let tooltipX = rect.left - containerRect.left + 40;
+                let tooltipY = rect.top - containerRect.top - 80;
+
+                // Prevent tooltip going off screen
+                if (tooltipX > 600) tooltipX -= 220;
+                if (tooltipY < 80) tooltipY = rect.bottom - containerRect.top + 10;
+
+                tooltip.style.left = tooltipX + 'px';
+                tooltip.style.top = tooltipY + 'px';
+                tooltip.classList.add('visible');
+            });
+
+            nodeEl.addEventListener('mouseleave', () => {
+                document.getElementById(`line-${i}`).classList.remove('active');
+                document.getElementById(`dot-${i}`).classList.remove('active');
+                tooltip.classList.remove('visible');
+            });
+
+            container.appendChild(nodeEl);
+        });
+
+        // Auto-highlight animation (cycles through nodes)
+        let currentHighlight = 0;
+        setInterval(() => {
+            // Remove previous
+            const prevLine = document.getElementById(`line-${currentHighlight}`);
+            const prevDot = document.getElementById(`dot-${currentHighlight}`);
+            if (prevLine) prevLine.classList.remove('active');
+            if (prevDot) prevDot.classList.remove('active');
+
+            // Next node
+            currentHighlight = (currentHighlight + 1) % nodes.length;
+
+            // Activate next
+            const nextLine = document.getElementById(`line-${currentHighlight}`);
+            const nextDot = document.getElementById(`dot-${currentHighlight}`);
+            if (nextLine) nextLine.classList.add('active');
+            if (nextDot) nextDot.classList.add('active');
+        }, 1500);
+    </script>
+</body>
+</html>
