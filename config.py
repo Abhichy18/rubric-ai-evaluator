@@ -23,20 +23,20 @@ load_dotenv()
 
 # ── API Key ──────────────────────────────────────────────────────────────────
 # Try .env first (local), then st.secrets (Streamlit Cloud)
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
 
-if not OPENROUTER_API_KEY:
+if not NVIDIA_API_KEY:
     try:
         import streamlit as st
-        OPENROUTER_API_KEY = st.secrets.get("OPENROUTER_API_KEY")
+        NVIDIA_API_KEY = st.secrets.get("NVIDIA_API_KEY")
     except Exception:
         pass
 
-if not OPENROUTER_API_KEY:
+if not NVIDIA_API_KEY:
     raise ValueError(
         "\n"
         "╔══════════════════════════════════════════════════════════════╗\n"
-        "║  ERROR: OPENROUTER_API_KEY not found!                      ║\n"
+        "║  ERROR: NVIDIA_API_KEY not found!                            ║\n"
         "║                                                            ║\n"
         "║  For local: Create a .env file with your key               ║\n"
         "║  For cloud: Add key in Streamlit secrets                   ║\n"
@@ -46,48 +46,31 @@ if not OPENROUTER_API_KEY:
 # ── Model Configuration ─────────────────────────────────────────────────────
 #
 # WHY TWO MODELS?
-#   Free-tier AI models sometimes fail (rate limits, server overload, etc.)
-#   Having a fallback model means our app stays working even when the
-#   primary model is down. This is called "resilience" in production systems.
+#   If the primary model is down, the fallback model keeps the app working.
 #
 # WHY THESE SPECIFIC MODELS?
 #
-#   PRIMARY: Google Gemma-3-27B
-#     - Strong reasoning and instruction following
-#     - Good at structured JSON output
-#     - Free on OpenRouter
-#
-#   FALLBACK: Llama-3.3-70B-Instruct
+#   FAST_MODEL: meta/llama-3.3-70b-instruct
 #     - Fast and reliable
-#     - Good JSON compliance
-#     - Largest free model available — great backup
+#     - Great general-purpose reasoning model
 #
-# Note: Model availability on free tier changes over time.
-# Run this to check current free models:
-#   python -c "import requests; r=requests.get('https://openrouter.ai/api/v1/models'); [print(m['id']) for m in r.json()['data'] if ':free' in m['id']]"
+#   REASONING_MODEL: deepseek-ai/deepseek-v4-pro
+#     - Very strong reasoning and instruction following
+#     - Slower, but better for complex tasks
 #
 # ─────────────────────────────────────────────────────────────────────────────
-PRIMARY_MODEL = "google/gemma-3-27b-it:free"
-FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+FAST_MODEL = "meta/llama-3.3-70b-instruct"
+REASONING_MODEL = "deepseek-ai/deepseek-v4-pro"
 
-# ── OpenRouter API Settings ─────────────────────────────────────────────────
+# ── NVIDIA NIM API Settings ─────────────────────────────────────────────────
 #
-# OpenRouter uses the same API format as OpenAI (chat completions),
-# but with a different base URL and some extra required headers.
-#
-# REQUIRED HEADERS FOR FREE TIER:
-#   HTTP-Referer: Where your app is hosted (OpenRouter tracks this)
-#   X-Title:      Your app name (shows in your OpenRouter dashboard)
-#
-# Without these headers, free-tier requests will be rejected.
+# NVIDIA NIM uses the same API format as OpenAI (chat completions).
 # ─────────────────────────────────────────────────────────────────────────────
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
+NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 
-OPENROUTER_HEADERS = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+NVIDIA_HEADERS = {
+    "Authorization": f"Bearer {NVIDIA_API_KEY}",
     "Content-Type": "application/json",
-    "HTTP-Referer": "http://localhost:8501",     # Streamlit default port
-    "X-Title": "Mini Answer Evaluator",          # Shows in OpenRouter dashboard
 }
 
 # ── Evaluation Settings ─────────────────────────────────────────────────────
