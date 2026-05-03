@@ -590,6 +590,13 @@ if answer.strip():
     word_count = len(answer.strip().split())
     st.caption(f"📊 Word count: **{word_count}** words")
 
+# Model selection toggle
+deep_reasoning_mode = st.toggle(
+    "🧠 Enable Deep Reasoning Mode",
+    value=False,
+    help="Switches from the ultra-fast Llama 3.3 70B to the powerful but slower DeepSeek V4 Pro model for highly complex evaluations."
+)
+
 # Compare mode toggle
 compare_mode = st.checkbox(
     "⚖️ Enable comparison mode (with rubric vs without rubric)",
@@ -649,9 +656,9 @@ if evaluate_btn and question.strip() and answer.strip():
     # ── Run Evaluation ───────────────────────────────────────────────────
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
-    with st.spinner("🧠 AI is evaluating the answer... This may take 15-30 seconds on free tier."):
+    with st.spinner("🧠 AI is evaluating the answer... Please wait."):
         try:
-            result = evaluate(question, answer)
+            result = evaluate(question, answer, use_deep_reasoning=deep_reasoning_mode)
         except Exception as e:
             st.error(f"❌ Evaluation failed: {str(e)}")
             st.info("💡 **Tip:** Free-tier models can be busy. Wait a minute and try again.")
@@ -765,7 +772,7 @@ if evaluate_btn and question.strip() and answer.strip():
 
         with st.spinner("🔄 Running evaluation without rubric for comparison..."):
             try:
-                result_no_rubric = evaluate_without_rubric(question, answer)
+                result_no_rubric = evaluate_without_rubric(question, answer, use_deep_reasoning=deep_reasoning_mode)
             except Exception as e:
                 st.warning(f"Comparison evaluation failed: {e}")
                 result_no_rubric = None
