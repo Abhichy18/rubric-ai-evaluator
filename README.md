@@ -271,7 +271,7 @@ If I had more time, here's what I'd add:
 | Component | Technology | Why |
 |-----------|-----------|-----|
 | **Frontend** | Streamlit | Rapid prototyping, built-in components |
-| **LLM API** | OpenRouter | Free-tier access to multiple models |
+| **LLM API** | NVIDIA NIM | High-performance access to top-tier models |
 | **Validation** | Pydantic V2 | Type safety, automatic error correction |
 | **HTTP** | Requests | Simple, reliable API calls |
 | **Config** | python-dotenv | Secure API key management |
