@@ -1,5 +1,5 @@
 # evaluator.py
-# The core evaluation engine — calls OpenRouter LLM with rubric-grounded prompts
+# The core evaluation engine — calls NVIDIA NIM LLM with rubric-grounded prompts
 # and returns structured JSON scores with per-criterion breakdown.
 
 import requests
@@ -8,10 +8,10 @@ import re
 import time
 from retriever import retrieve_rubric
 from config import (
-    OPENROUTER_BASE_URL,
-    OPENROUTER_HEADERS,
-    PRIMARY_MODEL,
-    FALLBACK_MODEL,
+    NVIDIA_BASE_URL,
+    NVIDIA_HEADERS,
+    FAST_MODEL,
+    REASONING_MODEL,
     LLM_TEMPERATURE,
     MAX_TOKENS_WITH_RUBRIC,
     MAX_TOKENS_WITHOUT_RUBRIC,
@@ -104,20 +104,16 @@ Criteria (evaluate each independently):
 }}"""
 
 
-def call_openrouter(prompt: str, model: str, max_tokens: int = 1200) -> str:
+def call_nvidia_nim(prompt: str, model: str, max_tokens: int = 1200) -> str:
     """
-    Makes an API call to OpenRouter's chat completion endpoint.
-    
-    Includes retry logic for 429 (rate limit) errors — the free tier
-    allows ~20 requests/minute. If we hit the limit, we wait and retry
-    with exponential backoff (5s → 10s → 20s).
-    
-    Returns the raw text content from the LLM response.
+    Makes an API call to NVIDIA NIM's chat completion endpoint.
     """
     payload = {
         "model": model,
         "max_tokens": max_tokens,
         "temperature": LLM_TEMPERATURE,
+        "top_p": 0.95,
+        "extra_body": {"chat_template_kwargs": {"thinking": False}},
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user",   "content": prompt},
@@ -128,8 +124,8 @@ def call_openrouter(prompt: str, model: str, max_tokens: int = 1200) -> str:
     max_retries = 3
     for attempt in range(max_retries):
         response = requests.post(
-            OPENROUTER_BASE_URL,
-            headers=OPENROUTER_HEADERS,
+            NVIDIA_BASE_URL,
+            headers=NVIDIA_HEADERS,
             json=payload,
             timeout=REQUEST_TIMEOUT,
         )
@@ -144,9 +140,9 @@ def call_openrouter(prompt: str, model: str, max_tokens: int = 1200) -> str:
         response.raise_for_status()
         data = response.json()
 
-        # OpenRouter sometimes returns error object even on HTTP 200
+        # NVIDIA NIM sometimes returns error object even on HTTP 200
         if "error" in data:
-            raise RuntimeError(f"OpenRouter error: {data['error']}")
+            raise RuntimeError(f"NVIDIA API error: {data['error']}")
 
         return data["choices"][0]["message"]["content"].strip()
 
@@ -206,18 +202,19 @@ def validate_and_fix(result: dict) -> dict:
     return result
 
 
-def evaluate(question: str, answer: str) -> dict:
+def evaluate(question: str, answer: str, use_deep_reasoning: bool = False) -> dict:
     """
     Main evaluation pipeline — the heart of the entire project.
     
     Flow:
       1. Retrieve the best-matching rubric for the question
       2. Build a structured evaluation prompt
-      3. Call primary model (DeepSeek-R1)
-      4. If primary fails → wait 1s → try fallback model (Llama-3.3)
-      5. Clean the response (strip <think> blocks, code fences)
-      6. Validate and fix arithmetic errors
-      7. Attach metadata (rubric used, match score, model name)
+      3. Determine model to use (Fast vs Reasoning) based on user toggle
+      4. Call primary model 
+      5. If primary fails → wait 1s → try fallback model
+      6. Clean the response (strip <think> blocks, code fences)
+      7. Validate and fix arithmetic errors
+      8. Attach metadata (rubric used, match score, model name)
     
     Returns a dict matching the EvaluationResult schema.
     """
@@ -229,19 +226,21 @@ def evaluate(question: str, answer: str) -> dict:
 
     # Step 3 & 4: Call LLM with fallback
     raw = None
-    model_used = PRIMARY_MODEL
+    primary_model = REASONING_MODEL if use_deep_reasoning else FAST_MODEL
+    fallback_model = FAST_MODEL if use_deep_reasoning else REASONING_MODEL
+    model_used = primary_model
 
     try:
-        raw = call_openrouter(prompt, PRIMARY_MODEL, MAX_TOKENS_WITH_RUBRIC)
+        raw = call_nvidia_nim(prompt, primary_model, MAX_TOKENS_WITH_RUBRIC)
         result = clean_json(raw)
     except Exception as e:
-        print(f"[evaluator] Primary model failed: {e}")
+        print(f"[evaluator] Primary model ({primary_model}) failed: {e}")
         print("[evaluator] Switching to fallback model...")
         time.sleep(1)  # Brief pause to avoid rate limiting
         try:
-            raw = call_openrouter(prompt, FALLBACK_MODEL, MAX_TOKENS_WITH_RUBRIC)
+            raw = call_nvidia_nim(prompt, fallback_model, MAX_TOKENS_WITH_RUBRIC)
             result = clean_json(raw)
-            model_used = FALLBACK_MODEL
+            model_used = fallback_model
         except Exception as e2:
             raise RuntimeError(
                 f"Both models failed. Primary: {e} | Fallback: {e2}"
@@ -259,7 +258,7 @@ def evaluate(question: str, answer: str) -> dict:
     return result
 
 
-def evaluate_without_rubric(question: str, answer: str) -> dict:
+def evaluate_without_rubric(question: str, answer: str, use_deep_reasoning: bool = False) -> dict:
     """
     Evaluates an answer WITHOUT any rubric — for comparison mode.
     
@@ -288,11 +287,14 @@ Be fair and consistent.
   "criterion_breakdown": []
 }}"""
 
+    primary_model = REASONING_MODEL if use_deep_reasoning else FAST_MODEL
+    fallback_model = FAST_MODEL if use_deep_reasoning else REASONING_MODEL
+
     try:
-        raw = call_openrouter(prompt, PRIMARY_MODEL, MAX_TOKENS_WITHOUT_RUBRIC)
+        raw = call_nvidia_nim(prompt, primary_model, MAX_TOKENS_WITHOUT_RUBRIC)
         result = clean_json(raw)
     except Exception:
-        raw = call_openrouter(prompt, FALLBACK_MODEL, MAX_TOKENS_WITHOUT_RUBRIC)
+        raw = call_nvidia_nim(prompt, fallback_model, MAX_TOKENS_WITHOUT_RUBRIC)
         result = clean_json(raw)
 
     return result
